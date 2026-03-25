@@ -45,7 +45,7 @@ Skor hesaplama fonksiyonu yaz:
 Skor kartı bileşeni: Büyük sayı, renk (kırmızı/sarı/yeşil), kısa açıklama.
 Sızıntı listesi: Her sızıntı için ad, tarih, etkilenen veri türleri.
 ```
-- [ ] Tamamlandı
+- [x] Tamamlandı
 
 ### Görev 4 — Onboarding Anketi
 ```
