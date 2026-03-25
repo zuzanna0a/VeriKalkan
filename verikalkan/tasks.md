@@ -58,7 +58,7 @@ Adım 5: "Son 1 yılda herhangi bir yerden veri silme talebinde bulundun mu?" (E
 Yanıtları localStorage'a kaydet.
 Son adımda /dashboard'a yönlendir.
 ```
-- [ ] Tamamlandı
+- [x] Tamamlandı
 
 ---
 

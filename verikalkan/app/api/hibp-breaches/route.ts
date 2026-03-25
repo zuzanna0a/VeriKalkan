@@ -3,6 +3,24 @@ import type { HibpBreach } from "@/features/score/types";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const FALLBACK_BREACHES: HibpBreach[] = [
+  {
+    name: "ExampleBreach",
+    breachDate: "2019-06-01",
+    dataClasses: ["Email addresses", "Passwords"],
+  },
+  {
+    name: "SampleLeak",
+    breachDate: "2020-11-15",
+    dataClasses: ["Names", "Phone numbers"],
+  },
+  {
+    name: "DemoCompromise",
+    breachDate: "2022-03-10",
+    dataClasses: ["Email addresses", "IP addresses"],
+  },
+];
+
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as
     | { email?: unknown }
@@ -19,13 +37,16 @@ export async function POST(req: Request) {
 
   const hibpApiKey = process.env.HIBP_API_KEY;
   if (!hibpApiKey) {
+    const breachCount = FALLBACK_BREACHES.length;
+    const score = calculateDigitalHealthScore(breachCount);
     return Response.json(
       {
-        error: "missing_api_key",
-        message:
-          "HIBP API anahtarı eksik. Lütfen `.env.local` içinde `HIBP_API_KEY` tanımlayın.",
+        breaches: FALLBACK_BREACHES,
+        breachCount,
+        score,
+        isFallback: true,
       },
-      { status: 500 },
+      { status: 200 },
     );
   }
 

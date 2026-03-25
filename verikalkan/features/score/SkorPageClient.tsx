@@ -40,7 +40,7 @@ export default function SkorPageClient() {
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/hibp-breaches", {
+      const res = await fetch("/api/score", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -55,7 +55,7 @@ export default function SkorPageClient() {
       if (!res.ok) {
         if (res.status === 429) {
           setErrorMessage(
-            json?.message ??
+            (json as ApiErrorResponse)?.message ??
               "HIBP istek sınırına ulaştı. Lütfen bir süre sonra tekrar deneyin.",
           );
           return;

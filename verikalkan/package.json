@@ -14,17 +14,18 @@
   },
   "dependencies": {
     "@google/generative-ai": "latest",
+    "@radix-ui/react-slot": "latest",
     "@supabase/supabase-js": "latest",
-    "jspdf": "latest",
-    "next": "^14.2.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "resend": "latest",
-    "lucide-react": "latest",
-    "clsx": "latest",
-    "tailwind-merge": "latest",
+    "@tailwindcss/postcss": "^4.2.2",
     "class-variance-authority": "latest",
-    "@radix-ui/react-slot": "latest"
+    "clsx": "latest",
+    "jspdf": "latest",
+    "lucide-react": "latest",
+    "next": "^16.2.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "resend": "latest",
+    "tailwind-merge": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",
