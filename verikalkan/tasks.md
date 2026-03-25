@@ -28,7 +28,7 @@ Supabase client kurulumunu yap.
 Tasarım: Koyu lacivert (#1E3A5F) header, beyaz arka plan, mavi CTA butonları.
 Mobil uyumlu olsun.
 ```
-- [ ] Tamamlandı
+- [x] Tamamlandı
 
 ### Görev 3 — Dijital Sağlık Skoru Sayfası
 ```
