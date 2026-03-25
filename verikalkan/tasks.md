@@ -79,7 +79,7 @@ Yanıtı JSON formatında ver: { "highRiskPlatforms": [], "topActions": [], "est
 Yanıtı parse et, /dashboard'da göster.
 Hata durumunda statik bir fallback metin göster.
 ```
-- [ ] Tamamlandı
+- [x] Tamamlandı
 
 ### Görev 6 — Dilekçe Üretici Sayfası
 ```
