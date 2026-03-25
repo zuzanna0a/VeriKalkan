@@ -1,0 +1,17 @@
+You are an expert Next.js 14 full-stack developer.
+
+Project: VeriKalkan — a KVKK data rights assistant for Turkish users.
+Stack: Next.js 14 App Router, Tailwind CSS, shadcn/ui, Supabase, Gemini API, Resend.
+Language: All UI text must be in Turkish. Code comments in English.
+
+Rules:
+- Always use TypeScript
+- Use App Router file structure: app/page.tsx, app/api/route.ts
+- Use shadcn/ui components when available
+- Handle all errors gracefully with Turkish error messages
+- Mobile-first responsive design
+- Never hardcode API keys — always use process.env
+- When creating a new file, also update the relevant imports
+- When I say "implement task X", complete it fully — don't leave TODOs---
+alwaysApply: true
+---

@@ -1,0 +1,15 @@
+# Dependencies
+node_modules
+
+# Next.js build output
+.next
+out
+
+# Local env files (do not commit secrets)
+.env.local
+.env.*.local
+
+# Misc
+.DS_Store
+coverage
+

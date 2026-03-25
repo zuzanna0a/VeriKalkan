@@ -15,7 +15,7 @@ Supabase client kurulumunu yap.
 .env.local.example dosyası oluştur, tüm gerekli değişkenleri listele.
 .gitignore'a .env.local ekle.
 ```
-- [ ] Tamamlandı
+- [x] Tamamlandı
 
 ### Görev 2 — Landing Page
 ```
