@@ -25,10 +25,12 @@ export async function POST(req: Request) {
       method: "GET",
       headers: {
         "User-Agent": "VeriKalkan-App",
-        accept: "application/json",
+        "Accept": "application/json",
+        "Accept-Encoding": "gzip, deflate",
       },
       cache: "no-store",
     });
+    console.log("HIBP request for:", email, "Status:", res.status);
 
     if (res.status === 404) {
       const breachCount = 0;
@@ -38,7 +40,7 @@ export async function POST(req: Request) {
 
     if (res.status === 429) {
       return Response.json(
-        { error: "rate_limited", message: "Çok fazla istek gönderildi, lütfen bekleyin" },
+        { error: "rate_limited", message: "Çok fazla istek, lütfen 2 dakika bekleyin" },
         { status: 429 },
       );
     }

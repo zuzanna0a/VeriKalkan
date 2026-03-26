@@ -40,7 +40,7 @@ export default function SkorPageClient() {
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/score", {
+      const res = await fetch("/api/breach-check", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
