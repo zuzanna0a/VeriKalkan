@@ -93,7 +93,7 @@ Adım 3 — Hak Türünü Seç:
   Radyo buton: "Verilerimi Sil (KVKK Md.7)" / "Verilerim Hakkında Bilgi Ver (KVKK Md.11)" / "Verilerimi Düzelt (KVKK Md.11)"
 "Dilekçeyi Oluştur" butonu.
 ```
-- [/] Tamamlandı (başlandı — companies.ts hazır)
+- [x] Tamamlandı (başlandı — companies.ts hazır ve form oluşturuldu)
 
 ### Görev 7 — Gemini Dilekçe Üretimi
 ```
@@ -113,7 +113,7 @@ Yanıtı düz metin olarak ver, markdown kullanma.
 ---
 Üretilen dilekçeyi önizleme alanında göster.
 ```
-- [ ] Tamamlandı
+- [x] Tamamlandı
 
 ### Görev 8 — Dilekçe Çıktıları
 ```
@@ -131,7 +131,7 @@ Dilekçe önizleme sayfasına 3 buton ekle:
   Başarıda: "E-posta gönderildi!" toast göster
   Hata durumunda: "Gönderim başarısız, dilekçeyi kopyalayıp kendin gönderebilirsin" mesajı
 ```
-- [ ] Tamamlandı
+- [x] Tamamlandı
 
 ---
 
@@ -165,7 +165,7 @@ CREATE TABLE tracking (
 
 Row Level Security'yi kapat (MVP için, sonra ekle).
 ```
-- [ ] Tamamlandı
+- [x] Tamamlandı
 
 ### Görev 10 — 30 Gün Takipçisi
 ```
