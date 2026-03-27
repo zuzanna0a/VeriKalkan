@@ -4,19 +4,17 @@ import * as React from "react";
 
 import { BreachedList } from "./breached-list";
 import { ScoreCard } from "./score-card";
+import { checkEmailBreaches } from "./breach-database";
+import type { OnboardingData } from "./breach-database";
+import { calculateDigitalHealthScore } from "./score-calculator";
 import type { HibpBreach } from "./types";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-type ApiOkResponse = {
+type ResultData = {
   breaches: HibpBreach[];
   breachCount: number;
   score: number;
-};
-
-type ApiErrorResponse = {
-  error?: string;
-  message?: string;
 };
 
 export default function SkorPageClient() {
@@ -25,7 +23,19 @@ export default function SkorPageClient() {
     null,
   );
   const [isLoading, setIsLoading] = React.useState(false);
-  const [data, setData] = React.useState<ApiOkResponse | null>(null);
+  const [data, setData] = React.useState<ResultData | null>(null);
+  const [onboardingData, setOnboardingData] =
+    React.useState<OnboardingData | null>(null);
+
+  // Read onboarding answers once on mount (written by OnboardingWizard)
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem("verikalkan:onboarding:v1");
+      if (raw) setOnboardingData(JSON.parse(raw) as OnboardingData);
+    } catch {
+      // localStorage unavailable or invalid JSON — proceed without data
+    }
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -39,42 +49,14 @@ export default function SkorPageClient() {
     }
 
     setIsLoading(true);
-    try {
-      const res = await fetch("/api/breach-check", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: trimmed }),
-      });
+    // Artificial delay so the UI feels like a real analysis is running
+    await new Promise((resolve) => setTimeout(resolve, 800));
 
-      const json = (await res.json().catch(() => ({}))) as
-        | ApiOkResponse
-        | ApiErrorResponse;
-
-      if (!res.ok) {
-        if (res.status === 429) {
-          setErrorMessage(
-            (json as ApiErrorResponse)?.message ??
-              "HIBP istek sınırına ulaştı. Lütfen bir süre sonra tekrar deneyin.",
-          );
-          return;
-        }
-
-        setErrorMessage(
-          (json as ApiErrorResponse)?.message ??
-            "Bir hata oluştu. Lütfen tekrar deneyin.",
-        );
-        return;
-      }
-
-      const ok = json as ApiOkResponse;
-      setData(ok);
-    } catch {
-      setErrorMessage("Bir hata oluştu. İnternet bağlantınızı kontrol edin.");
-    } finally {
-      setIsLoading(false);
-    }
+    const breaches = checkEmailBreaches(trimmed, onboardingData);
+    const breachCount = breaches.length;
+    const score = calculateDigitalHealthScore(breachCount);
+    setData({ breaches, breachCount, score });
+    setIsLoading(false);
   }
 
   return (
@@ -113,7 +95,7 @@ export default function SkorPageClient() {
             disabled={isLoading}
             className="inline-flex w-full items-center justify-center rounded-md bg-[#1A56DB] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1A56DB]/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isLoading ? "Skor hesaplanıyor..." : "Skorumu Öğren"}
+            {isLoading ? "Analiz ediliyor..." : "Skorumu Öğren"}
           </button>
         </form>
       </div>

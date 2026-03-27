@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 
@@ -19,6 +20,7 @@ const FALLBACK_RISK_TEXT =
   "Risk profilini şu an otomatik oluşturamadım. Yine de 2FA açmak, benzersiz güçlü şifreler kullanmak ve gereksiz uygulama izinlerini kaldırmak en hızlı başlangıçtır.";
 
 export default function DashboardClient() {
+  const router = useRouter();
   const [hasLoaded, setHasLoaded] = React.useState(false);
   const [answers, setAnswers] = React.useState<ReturnType<
     typeof loadOnboardingAnswers
@@ -31,9 +33,15 @@ export default function DashboardClient() {
   >(null);
 
   React.useEffect(() => {
-    setAnswers(loadOnboardingAnswers());
+    const loaded = loadOnboardingAnswers();
+    if (!loaded) {
+      // localStorage boşsa onboarding'e yönlendir
+      router.replace("/onboarding");
+      return;
+    }
+    setAnswers(loaded);
     setHasLoaded(true);
-  }, []);
+  }, [router]);
 
   React.useEffect(() => {
     if (!hasLoaded || !answers) return;
@@ -45,6 +53,7 @@ export default function DashboardClient() {
       setRiskLoading(true);
       setRiskFallbackMessage(null);
       try {
+        console.log("İstek gönderiliyor...", a);
         const res = await fetch("/api/risk-profile", {
           method: "POST",
           headers: { "content-type": "application/json" },
