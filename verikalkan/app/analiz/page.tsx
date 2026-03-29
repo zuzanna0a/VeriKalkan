@@ -3,226 +3,133 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ShieldCheck, Globe, FileText, Loader2, AlertCircle, ChevronRight, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { addPoints } from "@/features/gamification/useGamification";
+import GamificationToast from "@/features/gamification/GamificationToast";
+import DarkLayout from "@/components/DarkLayout";
+import { useTheme } from "@/context/ThemeContext";
 
-interface AnalysisResult {
-  sellsData: string;
-  deletesOnClose: string;
-  hasRetentionPeriod: string;
-  collectsChildData: string;
-  tracksLocation: string;
-  riskScore: number;
-  summary: string;
-}
+const COMPANY_PRIVACY_URLS = [
+  { name: "Trendyol", privacyUrl: "https://www.trendyol.com/gizlilik-politikasi" },
+  { name: "Hepsiburada", privacyUrl: "https://www.hepsiburada.com/gizlilik-politikasi" },
+  { name: "Getir", privacyUrl: "https://getir.com/tr/gizlilik-politikasi/" },
+  { name: "Yemeksepeti", privacyUrl: "https://www.yemeksepeti.com/tr-tr/gizlilik-politikasi" },
+  { name: "Sahibinden", privacyUrl: "https://www.sahibinden.com/gizlilik-politikasi" },
+  { name: "Instagram", privacyUrl: "https://privacycenter.instagram.com/policy" },
+  { name: "Google", privacyUrl: "https://policies.google.com/privacy?hl=tr" },
+  { name: "Facebook", privacyUrl: "https://www.facebook.com/privacy/policy/" },
+  { name: "Twitter/X", privacyUrl: "https://twitter.com/tr/privacy" },
+  { name: "LinkedIn", privacyUrl: "https://www.linkedin.com/legal/privacy-policy" },
+  { name: "TikTok", privacyUrl: "https://www.tiktok.com/legal/page/row/privacy-policy/tr-TR" },
+  { name: "Amazon TR", privacyUrl: "https://www.amazon.com.tr/gizlilik-politikasi" },
+];
 
-export default function AnalizPage() {
+export default function AnalysisPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<"url" | "text">("url");
-  const [inputValue, setInputValue] = useState("");
+  const [companySearch, setCompanySearch] = useState("");
+  const [suggestions, setSuggestions] = useState<{name: string, privacyUrl: string}[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<{name: string, privacyUrl: string} | null>(null);
+  const [manualText, setManualText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<any>(null);
+  const [toastBadge, setToastBadge] = useState<any>(null);
+  const { theme } = useTheme();
+
+  const handleCompanySearch = (value: string) => {
+    setCompanySearch(value);
+    setSelectedCompany(null);
+    if (value.length < 2) { setSuggestions([]); return; }
+    const filtered = COMPANY_PRIVACY_URLS.filter(c => c.name.toLowerCase().includes(value.toLowerCase()));
+    setSuggestions(filtered.slice(0, 5));
+  };
+
+  const selectCompany = (company: {name: string, privacyUrl: string}) => {
+    setSelectedCompany(company);
+    setCompanySearch(company.name);
+    setSuggestions([]);
+  };
 
   const handleAnalyze = async () => {
-    if (!inputValue.trim()) return;
     setLoading(true);
     setResult(null);
-    setError(null);
-
     try {
-      const res = await fetch("/api/analyze-text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode,
-          url: mode === "url" ? inputValue : undefined,
-          text: mode === "text" ? inputValue : undefined,
-        }),
-      });
-
+      const body = selectedCompany ? { mode: "url", url: selectedCompany.privacyUrl } : { mode: "text", text: manualText };
+      const res = await fetch("/api/analyze-text", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Bir hata oluştu");
+      if (data.error) throw new Error(data.error);
       setResult(data);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      const { newBadges } = addPoints(8, "analiz");
+      if (newBadges.length > 0) setToastBadge(newBadges[0]);
+    } catch(e: any) {
+      alert(e.message || "Hata oluştu.");
+    } finally { setLoading(false); }
   };
 
-  const getBadgeStyle = (value: string) => {
-    if (value === "EVET") return { bg: "#FEE2E2", color: "#DC2626" };
-    if (value === "HAYIR") return { bg: "#DCFCE7", color: "#16A34A" };
-    return { bg: "#FEF9C3", color: "#CA8A04" };
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score <= 40) return "bg-green-500";
-    if (score <= 70) return "bg-yellow-500";
-    return "bg-red-500";
-  };
-
-  const questions = [
-    { key: "sellsData", label: "Verilerini 3. taraflara satıyor mu?" },
-    { key: "deletesOnClose", label: "Hesap kapatılınca veriler siliniyor mu?" },
-    { key: "hasRetentionPeriod", label: "Veri saklama süresi belirtilmiş mi?" },
-    { key: "collectsChildData", label: "Çocuk verisi topluyor mu?" },
-    { key: "tracksLocation", label: "Konum takibi yapıyor mu?" },
-  ];
+  const labelStyle = { color: "var(--vk-text-muted)", fontSize: "11px", letterSpacing: "2px", textTransform: "uppercase" as const, fontFamily: "monospace", marginBottom: "12px", display: "block" };
+  const inputStyle = { width: "100%", background: "var(--vk-bg-input)", border: "1px solid var(--vk-border)", borderRadius: "8px", padding: "12px 16px", color: "var(--vk-text)", fontFamily: "monospace", outline: "none" };
+  const cardStyle = { background: "var(--vk-bg-card)", border: "1px solid var(--vk-border)", borderRadius: "12px", padding: "32px", width: "100%", maxWidth: "600px", margin: "0 auto" };
+  const primaryButtonStyle = { background: "var(--vk-primary)", color: "var(--vk-bg)", fontFamily: "monospace", fontWeight: "bold", fontSize: "12px", letterSpacing: "2px", padding: "14px 24px", border: "none", borderRadius: "6px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-[#1E3A5F] text-white py-4 px-6 sticky top-0 z-20 shadow-md">
-        <div className="max-w-5xl mx-auto flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6" />
-            <span className="font-bold text-lg">VeriKalkan</span>
-          </Link>
-          <nav className="flex items-center gap-4 text-sm font-medium">
-            <Link href="/" className="text-blue-200 hover:text-white transition-colors">Ana Sayfa</Link>
-            <Link href="/dashboard" className="text-blue-200 hover:text-white transition-colors">Dashboard</Link>
-            <Link href="/dilekce" className="text-blue-200 hover:text-white transition-colors">Dilekçe</Link>
-            <Link href="/analiz" className="text-white">Analiz</Link>
-          </nav>
-        </div>
-      </header>
-
-      <main className="flex-1 w-full max-w-[680px] mx-auto px-4 py-12">
-        <div className="space-y-8">
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Politika Analizörü</h1>
-            <p className="text-slate-500">Gizlilik politikalarını AI ile saniyeler içinde analiz edin.</p>
-          </div>
-
-          <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-            {/* Tabs */}
-            <div className="flex border-b">
-              <button 
-                onClick={() => { setMode("url"); setInputValue(""); setResult(null); setError(null); }}
-                className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-all ${mode === "url" ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'bg-slate-50 text-slate-400 hover:text-slate-600'}`}
-              >
-                <Globe className="h-4 w-4" /> URL Yapıştır
-              </button>
-              <button 
-                onClick={() => { setMode("text"); setInputValue(""); setResult(null); setError(null); }}
-                className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-all ${mode === "text" ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'bg-slate-50 text-slate-400 hover:text-slate-600'}`}
-              >
-                <FileText className="h-4 w-4" /> Metin Yapıştır
-              </button>
-            </div>
-
-            <div className="p-8 space-y-6">
-              {mode === "url" ? (
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Gizlilik Politikası Linki</label>
-                  <input 
-                    type="url"
-                    placeholder="https://sirket.com/gizlilik-politikasi"
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                  />
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Politika Metni</label>
-                  <textarea 
-                    rows={10}
-                    placeholder="Gizlilik politikası veya kullanım koşulları metnini buraya yapıştırın..."
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm resize-none"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                  />
-                </div>
-              )}
-
-              <Button 
-                onClick={handleAnalyze} 
-                disabled={loading || !inputValue.trim()}
-                className="w-full bg-[#1A56DB] text-white py-8 text-lg rounded-2xl shadow-lg shadow-blue-200"
-              >
-                {loading ? (
-                  <div className="flex items-center gap-3">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                    <span>Analiz Ediliyor...</span>
-                  </div>
-                ) : (
-                  "Analiz Et →"
-                )}
-              </Button>
-
-              {error && (
-                <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm">
-                  <AlertCircle className="h-5 w-5 shrink-0" />
-                  {error}
+    <DarkLayout title="Gizlilik Analizi">
+      <div className="max-w-5xl mx-auto px-6 py-12">
+        <div style={cardStyle}>
+          <div style={{ marginBottom: "24px" }}>
+            <label style={labelStyle}>// ŞİRKET ARA</label>
+            <div className="relative">
+              <input style={inputStyle} placeholder="Amazon, Trendyol, Instagram..." value={companySearch} onChange={e => handleCompanySearch(e.target.value)} />
+              {suggestions.length > 0 && (
+                <div style={{ position: "absolute", top: "110%", left: 0, right: 0, background: "var(--vk-bg-card)", border: "1px solid var(--vk-border)", borderRadius: "8px", zIndex: 50, overflow: "hidden" }}>
+                  {suggestions.map(s => (
+                    <div key={s.name} onClick={() => selectCompany(s)} style={{ padding: "12px 16px", color: "var(--vk-text)", fontSize: "12px", fontFamily: "monospace", cursor: "pointer", borderBottom: "1px solid var(--vk-border)" }}>{s.name}</div>
+                  ))}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Results Card */}
-          {result && (
-            <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="p-8 space-y-8">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900">Analiz Sonucu</h2>
-                    <p className="text-sm text-slate-500">AI tarafından gizlilik analizi tamamlandı.</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 text-center">RİSK SKORU</div>
-                    <div className={`px-4 py-1.5 rounded-full text-white font-bold text-sm ${getScoreColor(result.riskScore)}`}>
-                      {result.riskScore} / 100
-                    </div>
-                  </div>
-                </div>
+          <div style={{ margin: "24px 0", textAlign: "center", color: "var(--vk-text-muted)", fontSize: "11px" }}>--- VEYA ---</div>
 
-                <div className="divide-y divide-slate-100">
-                  {questions.map((q) => {
-                    const val = (result as any)[q.key];
-                    const style = getBadgeStyle(val);
-                    return (
-                      <div key={q.key} className="flex justify-between items-center py-4">
-                        <span className="text-sm text-slate-600 font-medium">{q.label}</span>
-                        <span style={{
-                          padding: "4px 12px",
-                          borderRadius: "99px",
-                          fontSize: "12px",
-                          fontWeight: "bold",
-                          background: style.bg,
-                          color: style.color
-                        }}>
-                          {val}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+          <div style={{ marginBottom: "32px" }}>
+            <label style={labelStyle}>// METNİ YAPIŞTIR</label>
+            <textarea style={{...inputStyle, height: "200px", resize: "none"}} placeholder="Gizlilik politikası metnini buraya yapıştırın..." value={manualText} onChange={e => setManualText(e.target.value)} />
+          </div>
 
-                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 italic relative">
-                  <p className="text-sm text-slate-600 leading-relaxed text-center relative z-10">"{result.summary}"</p>
-                  <div className="absolute top-0 left-0 w-8 h-8 bg-blue-100/30 rounded-full blur-xl" />
-                </div>
-
-                <Button 
-                  asChild
-                  className="w-full bg-[#1E3A5F] text-white py-8 text-lg rounded-2xl shadow-lg border-b-4 border-blue-900 active:border-b-0 hover:bg-[#1E3A5F]/95"
-                >
-                  <Link href="/dilekce" className="flex items-center justify-center gap-2">
-                    Bu Şirkete Dilekçe Gönder <ChevronRight className="h-5 w-5" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          )}
+          <button onClick={handleAnalyze} disabled={loading} style={{...primaryButtonStyle, width: "100%"}}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "ANALİZİ BAŞLAT →"}
+          </button>
         </div>
-      </main>
-      
-      <footer className="py-8 text-center text-slate-400 text-xs">
-        🛡️ Politikalarınız uçtan uca şifrelenir ve asla kaydedilmez.
-      </footer>
-    </div>
+
+        {result && (
+          <div style={{...cardStyle, marginTop: "40px", border: `1px solid ${result.riskScore >= 70 ? "rgba(239, 68, 68, 0.3)" : "rgba(var(--vk-primary-rgb), 0.3)"}`}}>
+            <div className="flex justify-between items-center mb-10">
+              <label style={labelStyle}>// ANALİZ SONUCU</label>
+              <div style={{ fontSize: "28px", fontWeight: "bold", color: result.riskScore >= 70 ? "#ef4444" : result.riskScore >= 40 ? "#f59e0b" : "var(--vk-primary)", fontFamily: "monospace" }}>{result.riskScore}/100</div>
+            </div>
+
+            <div className="space-y-4 mb-10">
+              {[
+                { key: "sellsData", label: "Verileri 3. taraflara satıyor mu?" },
+                { key: "deletesOnClose", label: "Hesap kapatılınca siliyor mu?" },
+                { key: "hasRetentionPeriod", label: "Saklama süresi belirtilmiş mi?" },
+                { key: "tracksLocation", label: "Konum takibi yapıyor mu?" }
+              ].map(q => (
+                <div key={q.key} className="flex justify-between items-center py-3 border-b border-vk-border">
+                  <span style={{ fontSize: "12px", color: "var(--vk-text-muted)", fontFamily: "monospace" }}>{q.label}</span>
+                  <span style={{ fontSize: "11px", fontWeight: "bold", color: result[q.key] === "EVET" ? "#ef4444" : "var(--vk-primary)", fontFamily: "monospace" }}>{result[q.key]}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: "var(--vk-bg)", padding: "16px", borderRadius: "8px", border: "1px solid var(--vk-border)", color: "var(--vk-text-muted)", fontSize: "12px", lineHeight: "1.6", marginBottom: "20px" }}>
+              {result.summary}
+            </div>
+
+            <Link href="/dilekce" style={{...primaryButtonStyle, width: "100%"}}>BU ŞİRKETE DİLEKÇE GÖNDER →</Link>
+          </div>
+        )}
+      </div>
+      {toastBadge && <GamificationToast badge={toastBadge} onClose={() => setToastBadge(null)} />}
+    </DarkLayout>
   );
 }

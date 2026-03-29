@@ -3,18 +3,26 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import DarkLayout from "@/components/DarkLayout";
 
 export default function TakipRedirect() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/dashboard");
+    const timer = setTimeout(() => {
+      router.replace("/dashboard");
+    }, 1000);
+    return () => clearTimeout(timer);
   }, [router]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-      <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
-      <p className="text-slate-600 font-medium">Dashboard'a yönlendiriliyorsunuz...</p>
-    </div>
+    <DarkLayout title="30 Gün Takip">
+      <div className="flex flex-col items-center justify-center py-40">
+        <Loader2 className="h-8 w-8 animate-spin text-[#00ff88] mb-6" />
+        <p style={{ color: "#475569", fontFamily: "monospace", fontSize: "12px", letterSpacing: "2px" }}>
+          // REDIRECTING TO DASHBOARD...
+        </p>
+      </div>
+    </DarkLayout>
   );
 }

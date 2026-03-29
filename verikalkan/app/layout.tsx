@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ThemeProvider } from "@/context/ThemeContext";
+import SayeBot from "@/features/kalkanbot/KalkanBot";
 
 export const metadata: Metadata = {
   title: "VeriKalkan",
@@ -14,8 +16,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr" suppressHydrationWarning>
-      <body>{children}</body>
+      <body>
+        <ThemeProvider>
+          {children}
+          <SayeBot />
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
-

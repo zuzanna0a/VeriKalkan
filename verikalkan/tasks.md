@@ -287,7 +287,10 @@ Mobil responsive kontrol: iPhone SE, iPhone 14, Samsung Galaxy S23.
 Favicon ekle (kalkan ikonu).
 Meta tags ekle (SEO için): title, description, og:image.
 ```
-- [ ] Tamamlandı
+- [/] Kısmen Tamamlandı
+  - Hacker temalı ana sayfa redesign (v2)
+  - Pixel Art rozet sistemi entegrasyonu
+  - Gamification Toast pixel art desteği
 
 ### Görev 15 — GitHub'a Yükle ve Deploy
 ```
