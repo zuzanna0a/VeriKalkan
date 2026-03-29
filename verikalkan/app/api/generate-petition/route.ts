@@ -57,7 +57,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "system",
-            content: "Sen bir KVKK uzmanı avukatsın. Türkiye'de kişisel veri hakları konusunda resmi dilekçe yazıyorsun. Resmi ama anlaşılır bir dil kullan. KVKK madde numaralarını belirt. Şirkete 30 günlük yasal süreyi hatırlat. İmza için boşluk bırak. Yanıtı düz metin olarak ver, markdown kullanma."
+            content: "Sen bir KVKK uzmanı avukatsın. Türkiye'de kişisel veri hakları konusunda resmi dilekçe yazıyorsun. Resmi ama anlaşılır bir dil kullan. KVKK madde numaralarını belirt. Şirkete 30 günlük yasal süreyi hatırlat. Dilekçenin sonuna İMZA satırı EKLEME — imza ayrıca eklenecek. Saygılarımla satırı da EKLEME — bu da ayrıca eklenecek. Yanıtı düz metin olarak ver, markdown kullanma."
           },
           {
             role: "user",
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
     // 4. Üretilen yepyeni sonucu Supabase'e kaydet (Caching için)
     if (supabase) {
       try {
-        await supabase.from("petitions").insert([{
+        const { error: insertError } = await supabase.from("petitions").insert([{
           user_email: userEmail || "anonim",
           user_name: userName,
           company_name: companyName,
@@ -94,7 +94,12 @@ export async function POST(req: Request) {
           petition_text: text,
           status: 'sent'
         }]);
-        console.log("Yeni dilekçe Supabase'e başarıyla kaydedildi.");
+
+        if (insertError) {
+          console.error("Supabase Insert Hatası - Detay:", JSON.stringify(insertError));
+        } else {
+          console.log("Supabase insert başarılı!");
+        }
       } catch (insertErr) {
         console.error("Dilekçe veritabanına kaydedilemedi:", insertErr);
       }
