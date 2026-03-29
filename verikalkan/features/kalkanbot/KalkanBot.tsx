@@ -53,11 +53,19 @@ export default function SayeBot() {
     setLoading(true);
     setCatState("thinking");
 
+    // Get breach context from dashboard or localStorage if available
+    const rawBreach = localStorage.getItem("vk-breaches");
+    const breachContext = rawBreach ? JSON.parse(rawBreach) : null;
+
     try {
       const res = await fetch("/api/kalkanbot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg, history: messages })
+        body: JSON.stringify({ 
+          message: userMsg, 
+          history: messages,
+          breachContext: breachContext?.sources || []
+        })
       });
       const data = await res.json();
       setMessages(prev => [...prev, { role: "bot", content: data.reply }]);

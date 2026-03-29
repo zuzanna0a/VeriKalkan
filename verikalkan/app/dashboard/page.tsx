@@ -23,11 +23,43 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [trackings, setTrackings] = useState<TrackingRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [breachData, setBreachData] = useState<any>(null);
+  const [breachLoading, setBreachLoading] = useState(false);
   const { theme } = useTheme();
 
   const gamification = getGamification();
   const nextBadge = BADGES.find(b => !gamification.badges.includes(b.id));
   const progressToNext = nextBadge ? Math.min(100, (gamification.score / nextBadge.threshold) * 100) : 100;
+
+  const translateField = (field: string) => {
+    const dict: Record<string, string> = {
+      "passwords": "Şifre",
+      "emails": "E-posta",
+      "names": "İsim",
+      "phones": "Telefon",
+      "addresses": "Adres",
+      "usernames": "Kullanıcı adı"
+    };
+    return dict[field] || field;
+  };
+
+  const fetchBreaches = async (email: string) => {
+    setBreachLoading(true);
+    try {
+      const res = await fetch("/api/check-breach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      setBreachData(data);
+      localStorage.setItem("vk-breaches", JSON.stringify(data));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBreachLoading(false);
+    }
+  };
 
   useEffect(() => {
     const raw = localStorage.getItem("vk-user");
@@ -36,10 +68,14 @@ export default function DashboardPage() {
       const userData = JSON.parse(raw);
       if (!userData.onboardingComplete) { router.replace("/basla"); return; }
       setUser(userData);
+      
+      // Fetch data
       fetch("/api/get-trackings?email=" + encodeURIComponent(userData.email))
         .then(r => r.json())
         .then(data => { setTrackings(data.trackings || []); setLoading(false); })
         .catch(() => setLoading(false));
+
+      fetchBreaches(userData.email);
     } catch { router.replace("/basla"); }
   }, [router]);
 
@@ -50,6 +86,9 @@ export default function DashboardPage() {
   const primaryButtonStyle = { background: "var(--vk-primary)", color: "var(--vk-bg)", fontFamily: "monospace", fontWeight: "bold", fontSize: "12px", letterSpacing: "2px", padding: "12px 24px", border: "none", borderRadius: "6px", cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px" };
   const secondaryButtonStyle = { background: "transparent", border: "1px solid var(--vk-border)", color: "var(--vk-text-muted)", fontFamily: "monospace", fontSize: "12px", letterSpacing: "1px", padding: "12px 24px", borderRadius: "6px", cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px" };
 
+  const allBreaches = breachData?.sources || [];
+  const onboardingPlatforms = [...(user.selectedPlatforms || []), ...(user.customPlatforms || [])];
+  
   return (
     <DarkLayout title="Dashboard">
       <div className="max-w-5xl mx-auto px-6 py-12 space-y-12">
@@ -105,9 +144,9 @@ export default function DashboardPage() {
                       }} />
                     </div>
                   </div>
-                  <Link href="/basla" style={secondaryButtonStyle}>
-                    <RefreshCw className="h-3 w-3" /> SKORU GÜNCELLE
-                  </Link>
+                  <button onClick={() => fetchBreaches(user.email)} disabled={breachLoading} style={secondaryButtonStyle}>
+                    {breachLoading ? <RefreshCw className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />} SKORU GÜNCELLE
+                  </button>
                 </div>
               </div>
             </div>
@@ -192,18 +231,45 @@ export default function DashboardPage() {
             <section className="space-y-6">
               <label style={labelStyle}>// RİSKLİ PLATFORMLAR</label>
               <div className="space-y-3">
-                {user.atRiskPlatforms.length > 0 ? user.atRiskPlatforms.map((p: string) => (
-                  <div key={p} style={cardStyle} className="flex items-center justify-between group">
-                    <div>
-                      <div style={{ color: "var(--vk-text)", fontWeight: "bold", fontSize: "14px" }}>{p}</div>
-                      <div style={{ color: "#ef4444", fontSize: "10px", fontWeight: "bold", letterSpacing: "1px", marginTop: "2px" }}>SIZINTI TESPİTİ</div>
-                    </div>
-                    <Link href={`/dilekce?company=${encodeURIComponent(p)}`} style={{ color: "var(--vk-primary)", fontSize: "11px", textDecoration: "none" }}>DİLEKÇE →</Link>
+                {breachLoading ? (
+                  <div className="text-center py-8 font-mono text-[10px] text-vk-text-muted animate-pulse">SIZIINTI VERİTABANI TARANIYOR...</div>
+                ) : allBreaches.length > 0 ? (
+                  allBreaches.map((source: any, idx: number) => {
+                    const isMatched = onboardingPlatforms.some(p => source.name.toLowerCase().includes(p.toLowerCase()));
+                    return (
+                      <div key={idx} style={{...cardStyle, border: isMatched ? "1px solid #ef4444" : "1px solid var(--vk-border)"}} className="space-y-3">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div style={{ color: isMatched ? "#ef4444" : "var(--vk-text)", fontWeight: "bold", fontSize: "14px" }}>
+                              {source.name}
+                            </div>
+                            <div style={{ color: "var(--vk-text-muted)", fontSize: "10px", fontFamily: "monospace" }}>
+                              {source.date || "Tarih Bilinmiyor"}
+                            </div>
+                          </div>
+                          {isMatched && <AlertTriangle className="h-4 w-4 text-[#ef4444]" />}
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {source.fields?.map((f: string) => (
+                            <span key={f} style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "4px", background: "var(--vk-bg-input)", border: "1px solid var(--vk-border)", color: "var(--vk-text-muted)" }}>
+                              {translateField(f)}
+                            </span>
+                          ))}
+                        </div>
+                        <Link href={`/dilekce?company=${encodeURIComponent(source.name)}`} style={{ display: "block", textAlign: "right", color: "var(--vk-primary)", fontSize: "11px", textDecoration: "none", fontWeight: "bold" }}>
+                          HAKKINI KULLAN →
+                        </Link>
+                      </div>
+                    );
+                  })
+                ) : breachData && allBreaches.length === 0 ? (
+                  <div style={{...cardStyle, textAlign: "center", padding: "32px", border: "1px dashed var(--vk-primary)"}}>
+                    <CheckCircle className="h-8 w-8 text-vk-primary opacity-50 mx-auto mb-4" />
+                    <p style={{ color: "var(--vk-primary)", fontSize: "12px", fontWeight: "bold" }}>Sızıntı tespit edilmedi! Dijital varlığınız güvende görünüyor.</p>
                   </div>
-                )) : (
+                ) : (
                   <div style={{...cardStyle, textAlign: "center", padding: "32px"}}>
-                    <CheckCircle className="h-8 w-8 opacity-20 mx-auto mb-4" />
-                    <p style={{ color: "var(--vk-text-muted)", fontSize: "12px", fontWeight: "bold" }}>Şu an için yüksek riskli platform bulunmuyor.</p>
+                    <p style={{ color: "var(--vk-text-muted)", fontSize: "12px" }}>Veriler yükleniyor...</p>
                   </div>
                 )}
               </div>
@@ -215,3 +281,4 @@ export default function DashboardPage() {
     </DarkLayout>
   );
 }
+

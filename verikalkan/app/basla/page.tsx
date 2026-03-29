@@ -80,17 +80,44 @@ export default function OnboardingPage() {
 
   const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const calculateScore = () => {
+  const calculateScore = async () => {
     const allPlatforms = [...formData.selectedPlatforms, ...formData.customPlatforms];
     const matchedBreaches = KNOWN_BREACHES.filter(b => allPlatforms.some(p => p.toLowerCase() === b.name.toLowerCase()));
     const atRisk = matchedBreaches.map(b => b.name);
     const atRiskCount = atRisk.length;
     
-    let score = 90;
-    if (atRiskCount === 1) score = 75;
-    else if (atRiskCount <= 3 && atRiskCount > 1) score = 55;
-    else if (atRiskCount <= 5 && atRiskCount > 3) score = 35;
-    else if (atRiskCount > 5) score = 20;
+    let score = 70; // Base score lowered to accommodate additions/deductions
+    if (atRiskCount === 1) score = 60;
+    else if (atRiskCount <= 3 && atRiskCount > 1) score = 45;
+    else if (atRiskCount <= 5 && atRiskCount > 3) score = 30;
+    else if (atRiskCount > 5) score = 10;
+
+    // LeakCheck API Integration
+    try {
+      const res = await fetch("/api/check-breach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email })
+      });
+      const data = await res.json();
+      const sources = data.sources || [];
+      localStorage.setItem("vk-breaches", JSON.stringify(data));
+      
+      if (sources.length === 0) {
+        score += 20;
+      } else if (sources.length >= 4) {
+        score -= 20;
+      }
+
+      // Password deductions
+      sources.forEach((s: any) => {
+        if (s.fields?.includes("passwords")) {
+          score -= 10;
+        }
+      });
+    } catch (e) {
+      // Fallback if API fails
+    }
 
     if (formData.yearsOnline === "12+ yıl") score -= 10;
     if (formData.hasRequestedDeletion) score += 10;
@@ -109,7 +136,7 @@ export default function OnboardingPage() {
     router.push("/dashboard");
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (step === 1) {
       if (!formData.firstName || !formData.lastName || !validateEmail(formData.email)) {
         setIsValidEmail(validateEmail(formData.email));
@@ -128,7 +155,7 @@ export default function OnboardingPage() {
         return;
       }
       if (subStep === 2) { setSubStep(3); return; }
-      if (subStep === 3) { calculateScore(); setStep(3); return; }
+      if (subStep === 3) { await calculateScore(); setStep(3); return; }
     }
     setStep(prev => prev + 1);
   };

@@ -2,11 +2,18 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { message, history } = await req.json();
+    const { message, history, breachContext } = await req.json();
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) return NextResponse.json({ reply: "API key eksik." }, { status: 500 });
 
-    const systemPrompt = `İsim: Saye Rol: Sen, Türkiye'deki bireyleri KVKK (Kişisel Verilerin Korunması Kanunu) ve dijital güvenlik konularında bilinçlendiren samimi bir siber güvenlik ve hukuk asistanısın.
+    let contextText = "";
+    if (breachContext && breachContext.length > 0) {
+      contextText = "\n\nKULLANICI VERİ SIZINTISI BİLGİSİ:\n" + 
+        breachContext.map((b: any) => `- ${b.name} (${b.date}): ${b.fields?.join(", ")} sızdı.`).join("\n") +
+        "\nKullanıcı güvenliği hakkında soru sorarsa bu sızıntılara atıfta bulunarak (panikletmeden) tavsiye ver.";
+    }
+
+    const systemPrompt = `İsim: Saye Rol: Sen, Türkiye'deki bireyleri KVKK (Kişisel Verilerin Korunması Kanunu) ve dijital güvenlik konularında bilinçlendiren samimi bir siber güvenlik ve hukuk asistanısın.${contextText}
 
 TEMEL GÖREVLERİN:
 Risk Analizi: Kullanıcı bir platform veya eylem belirttiğinde, o aksiyonun gizlilik risklerini (veri sızıntısı, 3. taraf paylaşımı vb.) rasyonel şekilde özetle.
