@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, CheckCircle2, CheckCircle, AlertCircle, Trash2, Plus, ArrowRight } from "lucide-react";
+import PixelIcon from "@/features/ui/PixelIcon";
 import { KNOWN_BREACHES } from "@/features/score/breach-database";
 import { addPoints } from "@/features/gamification/useGamification";
 import GamificationToast from "@/features/gamification/GamificationToast";
@@ -34,10 +35,49 @@ export default function OnboardingPage() {
   const [isValidEmail, setIsValidEmail] = useState(true);
   const [toastBadge, setToastBadge] = useState<any>(null);
 
-  const platforms = [
-    "Trendyol", "Hepsiburada", "Getir", "Yemeksepeti", "Sahibinden", "Amazon TR",
-    "Instagram", "Twitter/X", "LinkedIn", "TikTok", "Facebook",
-    "Papara", "Monese", "Ziraat Bankası"
+  const PLATFORM_CATEGORIES = [
+    {
+      id: "eticaret",
+      label: "E-Ticaret",
+      items: [
+        "Migros Sanal Market", "Getir", "Gorillas", "Çiçeksepeti", 
+        "Hepsiburada", "N11", "GittiGidiyor", "Morhipo", "Boyner", "Koton",
+        "Trendyol", "Sahibinden", "Amazon TR"
+      ]
+    },
+    {
+      id: "yemekmarket",
+      label: "Yemek & Market",
+      items: ["Trendyol Go", "Banabi", "Gratis", "Yemeksepeti"]
+    },
+    {
+      id: "finans",
+      label: "Finans & Bankacılık",
+      items: [
+        "Papara", "PayTR", "iyzico", "Garanti BBVA Mobile", "Akbank Direkt", 
+        "İş Bankası Mobile", "Ziraat Mobile", "Yapı Kredi Mobile", "Monese", "Ziraat Bankası"
+      ]
+    },
+    {
+      id: "ulasim",
+      label: "Seyahat & Ulaşım",
+      items: ["Biletall", "Enuygun", "Obilet", "İstanbulkart"]
+    },
+    {
+      id: "saglik",
+      label: "Sağlık",
+      items: ["Doktortakvimi", "Medikal Park", "e-Nabız"]
+    },
+    {
+      id: "medya",
+      label: "Eğlence & Medya",
+      items: ["Puhutv", "Gain", "Tabii", "BluTV", "Exxen"]
+    },
+    {
+      id: "sosyal",
+      label: "Sosyal & İletişim",
+      items: ["Instagram", "Twitter/X", "LinkedIn", "TikTok", "Facebook", "BiP", "Swarm (Foursquare)"]
+    }
   ];
 
   const handleTogglePlatform = (name: string) => {
@@ -82,50 +122,53 @@ export default function OnboardingPage() {
 
   const calculateScore = async () => {
     const allPlatforms = [...formData.selectedPlatforms, ...formData.customPlatforms];
-    const matchedBreaches = KNOWN_BREACHES.filter(b => allPlatforms.some(p => p.toLowerCase() === b.name.toLowerCase()));
-    const atRisk = matchedBreaches.map(b => b.name);
-    const atRiskCount = atRisk.length;
     
-    let score = 70; // Base score lowered to accommodate additions/deductions
-    if (atRiskCount === 1) score = 60;
-    else if (atRiskCount <= 3 && atRiskCount > 1) score = 45;
-    else if (atRiskCount <= 5 && atRiskCount > 3) score = 30;
-    else if (atRiskCount > 5) score = 10;
-
-    // LeakCheck API Integration
+    // AI Analysis call
     try {
+      const selectedCats = PLATFORM_CATEGORIES
+        .filter(cat => cat.items.some(item => formData.selectedPlatforms.includes(item)))
+        .map(cat => cat.label);
+
       const res = await fetch("/api/check-breach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email })
+        body: JSON.stringify({ 
+          email: formData.email,
+          platforms: allPlatforms,
+          internet_years: formData.yearsOnline,
+          categories: selectedCats
+        })
       });
       const data = await res.json();
       const sources = data.sources || [];
       localStorage.setItem("vk-breaches", JSON.stringify(data));
       
+      let score = 85; // Starting base score
+
       if (sources.length === 0) {
-        score += 20;
-      } else if (sources.length >= 4) {
-        score -= 20;
+        score += 10;
+      } else {
+        sources.forEach((s: any) => {
+          if (s.risk === "yüksek") score -= 15;
+          else if (s.risk === "orta") score -= 8;
+          else if (s.risk === "düşük") score -= 3;
+        });
       }
 
-      // Password deductions
-      sources.forEach((s: any) => {
-        if (s.fields?.includes("passwords")) {
-          score -= 10;
-        }
-      });
+      if (formData.hasRequestedDeletion) score += 5;
+      score = Math.max(0, Math.min(100, score));
+
+      setFormData(prev => ({ 
+        ...prev, 
+        score, 
+        atRiskPlatforms: sources.map((s: any) => s.name) 
+      }));
+      
+      const { newBadges } = addPoints(5, "skor");
+      if (newBadges.length > 0) setToastBadge(newBadges[0]);
     } catch (e) {
-      // Fallback if API fails
+      console.error("Score calculation error:", e);
     }
-
-    if (formData.yearsOnline === "12+ yıl") score -= 10;
-    if (formData.hasRequestedDeletion) score += 10;
-    score = Math.max(0, Math.min(100, score));
-
-    setFormData(prev => ({ ...prev, score, atRiskPlatforms: atRisk }));
-    const { newBadges } = addPoints(5, "skor");
-    if (newBadges.length > 0) setToastBadge(newBadges[0]);
   };
 
   const handleFinish = () => {
@@ -191,7 +234,7 @@ export default function OnboardingPage() {
           {step === 1 && (
             <div className="space-y-8">
               <div className="text-center">
-                <h2 style={{ color: "var(--vk-text)", fontSize: "24px", fontWeight: "bold", marginBottom: "8px" }}>Tanışalım 👋</h2>
+                <h2 style={{ color: "var(--vk-text)", fontSize: "24px", fontWeight: "bold", marginBottom: "8px" }}>Tanışalım <PixelIcon variant="wave" size={24} color="#ffd700" /></h2>
                 <p style={{ color: "var(--vk-text-muted)", fontSize: "14px" }}>Dilekçelerini senin adına hazırlayabilmemiz için bu bilgiler gerekli.</p>
               </div>
 
@@ -225,33 +268,40 @@ export default function OnboardingPage() {
                     <p style={{ color: "var(--vk-text-muted)", fontSize: "14px" }}>Kullandığın platformları seç, risklerini analiz edelim.</p>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto p-1">
-                    {platforms.map(p => {
-                      const isSelected = formData.selectedPlatforms.includes(p);
-                      return (
-                        <button
-                          key={p}
-                          onClick={() => handleTogglePlatform(p)}
-                          style={{
-                            padding: "12px",
-                            fontSize: "13px",
-                            fontFamily: "monospace",
-                            border: `1px solid ${isSelected ? "var(--vk-primary)" : "var(--vk-border)"}`,
-                            background: isSelected ? "rgba(var(--vk-primary-rgb), 0.1)" : "var(--vk-bg-input)",
-                            color: isSelected ? "var(--vk-primary)" : "var(--vk-text-muted)",
-                            borderRadius: "8px",
-                            textAlign: "left",
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            transition: "all 0.2s"
-                          }}
-                        >
-                          {p}
-                          {isSelected && <CheckCircle2 className="h-4 w-4" />}
-                        </button>
-                      );
-                    })}
+                  <div className="space-y-6 max-h-[400px] overflow-y-auto p-1 pr-3 custom-scrollbar">
+                    {PLATFORM_CATEGORIES.map(category => (
+                      <div key={category.id} className="space-y-3">
+                        <label style={{...labelStyle, marginBottom: "4px", fontSize: "10px", opacity: 0.8}}>// {category.label}</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {category.items.map(p => {
+                            const isSelected = formData.selectedPlatforms.includes(p);
+                            return (
+                              <button
+                                key={p}
+                                onClick={() => handleTogglePlatform(p)}
+                                style={{
+                                  padding: "10px 12px",
+                                  fontSize: "12px",
+                                  fontFamily: "monospace",
+                                  border: `1px solid ${isSelected ? "var(--vk-primary)" : "var(--vk-border)"}`,
+                                  background: isSelected ? "rgba(var(--vk-primary-rgb), 0.1)" : "var(--vk-bg-input)",
+                                  color: isSelected ? "var(--vk-primary)" : "var(--vk-text-muted)",
+                                  borderRadius: "6px",
+                                  textAlign: "left",
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  transition: "all 0.2s"
+                                }}
+                              >
+                                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginRight: "4px" }}>{p}</span>
+                                {isSelected && <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
                   <div className="space-y-2">
@@ -444,7 +494,7 @@ export default function OnboardingPage() {
         </div>
 
         <p style={{ textAlign: "center", color: "var(--vk-text-muted)", fontSize: "11px", letterSpacing: "1px" }}>
-          🛡️ Verileriniz yerel cihazınızda saklanır.
+          <PixelIcon variant="shield" size={14} color="var(--vk-primary)" className="mr-1" /> Verileriniz yerel cihazınızda saklanır.
         </p>
       </div>
       {toastBadge && <GamificationToast badge={toastBadge} onClose={() => setToastBadge(null)} />}

@@ -9,59 +9,43 @@ export async function POST(req: Request) {
     const body = await req.json();
     console.log("İstek Geldi (Generate Petition API):", body);
 
-    const { companyName, userName, userEmail, rightType, requestType, tcLast4, dpoEmail } = body;
+    const { companyName, userName, userEmail, rightType, requestType, tcLast4, dpoEmail, language } = body;
     const activeRightType = requestType || rightType;
+    const activeLanguage = language || "tr";
     const apiKey = process.env.GROQ_API_KEY;
 
     if (!apiKey || apiKey.trim() === "") {
       console.error("API KEY EKSİK!");
-      return NextResponse.json({ error: "Groq API anahtarı (.env.local) eksik." }, { status: 500 });
+      return NextResponse.json({ error: "Groq API anahtarı (.env.local) eklenmemiş veya hatalı." }, { status: 500 });
     }
 
-    // 1. Supabase Caching Kontrolü
-    if (supabase) {
-      try {
-        const { data: cachedPetitions, error: fetchError } = await supabase
-          .from("petitions")
-          .select("petition_text")
-          .eq("user_name", userName)
-          .eq("company_name", companyName)
-          .eq("right_type", activeRightType)
-          .limit(1);
-
-        if (!fetchError && cachedPetitions && cachedPetitions.length > 0) {
-          console.log("Supabase Caching: Önceden üretilmiş dilekçe bulundu. AI tetiklenmiyor.");
-          return NextResponse.json({ petitionText: cachedPetitions[0].petition_text });
-        }
-      } catch (dbErr) {
-        console.warn("Supabase Cache Okuma Hatası:", dbErr);
-      }
-    } else {
-      console.warn("Supabase API eksik, cache kontrolü atlanıyor.");
-    }
-
-    // İsim ayrıştırma
     const nameParts = (userName || "").trim().split(" ");
     const firstName = nameParts.slice(0, -1).join(" ") || userName;
     const lastName = nameParts.length > 1 ? nameParts.slice(-1).join(" ") : "";
-    const today = new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+    
+    // Dil desteği için sistem mesajı
+    const systemPrompt = activeLanguage === "en" 
+      ? "You are a GDPR and privacy expert lawyer. You are writing an official data privacy request (like GDPR Art. 15, 17) to a company. Use formal language. Mention relevant GDPR or local law articles. Remind the company of their 30-day legal response window. DO NOT include any signature lines, DO NOT include 'Sincerely' or 'Kind regards' at the end. DO NOT add 'Signature:' or 'Signed by:'. The response must be plain text without markdown."
+      : "Sen bir KVKK uzmanı avukatsın. Türkiye'de kişisel veri hakları konusunda resmi dilekçe yazıyorsun. Resmi ama anlaşılır bir dil kullan. KVKK madde numaralarını (Md. 7, 11 vb.) belirt. Şirkete 30 günlük yasal süreyi hatırlat. Dilekçenin sonuna İMZA satırı ASLA ekleme. 'Saygılarımla' satırı ASLA ekleme. 'İmzalayan:' veya 'Ad Soyad:' gibi bölümleri en sona ekleme. Yanıtı düz metin olarak ver, markdown kullanma.";
+
+    const today = new Date().toLocaleDateString(activeLanguage === "en" ? "en-US" : "tr-TR", { day: "numeric", month: "long", year: "numeric" });
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + process.env.GROQ_API_KEY
+        "Authorization": "Bearer " + apiKey
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
         messages: [
           {
             role: "system",
-            content: "Sen bir KVKK uzmanı avukatsın. Türkiye'de kişisel veri hakları konusunda resmi dilekçe yazıyorsun. Resmi ama anlaşılır bir dil kullan. KVKK madde numaralarını belirt. Şirkete 30 günlük yasal süreyi hatırlat. Dilekçenin sonuna İMZA satırı EKLEME — imza ayrıca eklenecek. Saygılarımla satırı da EKLEME — bu da ayrıca eklenecek. Yanıtı düz metin olarak ver, markdown kullanma."
+            content: systemPrompt
           },
           {
             role: "user",
-            content: "Şirket: " + companyName + "\nDPO E-posta: " + dpoEmail + "\nBaşvurucu: " + firstName + " " + lastName + "\nE-posta: " + userEmail + "\nHak türü: " + activeRightType + "\nBaşvuru No: BVTD-" + new Date().toISOString().slice(0,10) + "-" + Math.floor(1000 + Math.random() * 9000) + "\nTarih: " + today
+            content: `Language: ${activeLanguage}\nCompany: ${companyName}\nDPO Email: ${dpoEmail || "Privacy Department"}\nApplicant: ${firstName} ${lastName}\nEmail: ${userEmail}\nRequest Type: ${activeRightType}\nDate: ${today}`
           }
         ],
         temperature: 0.3,

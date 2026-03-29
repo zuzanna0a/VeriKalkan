@@ -9,8 +9,8 @@ export async function POST(req: Request) {
     let contextText = "";
     if (breachContext && breachContext.length > 0) {
       contextText = "\n\nKULLANICI VERİ SIZINTISI BİLGİSİ:\n" + 
-        breachContext.map((b: any) => `- ${b.name} (${b.date}): ${b.fields?.join(", ")} sızdı.`).join("\n") +
-        "\nKullanıcı güvenliği hakkında soru sorarsa bu sızıntılara atıfta bulunarak (panikletmeden) tavsiye ver.";
+        breachContext.map((b: any) => `- ${b.name} (${b.date}): ${b.fields?.join(", ")} sızdı. Risk Seviyesi: ${b.risk}${!b.certain ? " (AI Tahmini)" : ""}`).join("\n") +
+        "\nKullanıcı güvenliği hakkında soru sorarsa, özellikle 'verilerim güvende mi' veya 'hangi verilerim çalındı' dediğinde, bu sızıntılara atıfta bulunarak (panikletmeden, samimi ve Türkçe) cevap ver.";
     }
 
     const systemPrompt = `İsim: Saye Rol: Sen, Türkiye'deki bireyleri KVKK (Kişisel Verilerin Korunması Kanunu) ve dijital güvenlik konularında bilinçlendiren samimi bir siber güvenlik ve hukuk asistanısın.${contextText}

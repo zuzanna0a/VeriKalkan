@@ -134,10 +134,15 @@ export default function PixelBadge({ badgeId, unlocked, size = 48 }: PixelBadgeP
         fontFamily: "monospace",
         fontSize: "9px",
         color: unlocked ? "#475569" : "#1e293b",
-        letterSpacing: "0.5px"
+        letterSpacing: "0.5px",
+        display: "flex",
+        alignItems: "center",
+        gap: "4px"
       }}>
-        {unlocked ? "✓ KAZANILDI" : `${badge.threshold} PUAN`}
+        {unlocked ? <><PixelIcon variant="check" size={10} color="#00ff88" /> KAZANILDI</> : `${badge.threshold} PUAN`}
       </div>
     </div>
   );
 }
+
+import PixelIcon from "@/features/ui/PixelIcon";

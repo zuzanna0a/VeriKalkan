@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import PixelCat from "./PixelCat";
+import PixelIcon from "@/features/ui/PixelIcon";
 import { useTheme } from "@/context/ThemeContext";
 
 interface Message {
@@ -61,8 +62,8 @@ export default function SayeBot() {
       const res = await fetch("/api/kalkanbot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          message: userMsg, 
+        body: JSON.stringify({
+          message: userMsg,
           history: messages,
           breachContext: breachContext?.sources || []
         })
@@ -118,9 +119,9 @@ export default function SayeBot() {
               </div>
               <button
                 onClick={() => setOpen(false)}
-                style={{ marginLeft: "auto", background: "none", border: "none", color: T.muted, cursor: "pointer", fontSize: "20px" }}
+                style={{ marginLeft: "auto", background: "none", border: "none", color: T.muted, cursor: "pointer", fontSize: "0" }}
               >
-                ×
+                <PixelIcon variant="close" size={16} color={T.muted} />
               </button>
             </div>
 
@@ -187,12 +188,15 @@ export default function SayeBot() {
                   borderRadius: "8px",
                   padding: "10px 16px",
                   fontFamily: "monospace",
-                  fontSize: "14px",
+                  fontSize: "0",
                   fontWeight: "bold",
-                  cursor: "pointer"
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
                 }}
               >
-                →
+                <PixelIcon variant="arrow" size={16} color={T.primaryText} />
               </button>
             </div>
           </div>

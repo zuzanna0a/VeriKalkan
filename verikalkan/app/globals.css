@@ -84,18 +84,108 @@ body {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-4px); }
+
+  0%,
+
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
 }
 
-@keyframes scan { 0% { top: 0% } 100% { top: 100% } }
-@keyframes fadeUp { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }
-@keyframes glow { 
-  0%,100% { text-shadow: 0 0 10px var(--vk-primary) } 
-  50% { text-shadow: 0 0 25px var(--vk-primary), 0 0 50px rgba(var(--vk-primary-rgb), 0.2) } 
+@keyframes scan {
+  0% {
+    top: 0%
+  }
+
+  100% {
+    top: 100%
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px)
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0)
+  }
+}
+
+@keyframes glow {
+
+  0%,
+  100% {
+    text-shadow: 0 0 10px var(--vk-primary)
+  }
+
+  50% {
+    text-shadow: 0 0 25px var(--vk-primary), 0 0 50px rgba(var(--vk-primary-rgb), 0.2)
+  }
+}
+
+/* Mobile Responsiveness Fixes for Verification */
+@media (max-width: 480px) {
+  .px-6 {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .py-12 {
+    padding-top: 24px !important;
+    padding-bottom: 24px !important;
+  }
+
+  /* Target dashboard and petition cards specifically */
+  [class*="Card"],
+  .card,
+  div[style*="background: var(--vk-bg-card)"] {
+    padding: 16px !important;
+  }
+
+  h1 {
+    font-size: 22px !important;
+  }
+
+  /* Score text fix */
+  .text-\[84px\] {
+    font-size: 56px !important;
+  }
+
+  /* Force stack grids */
+  .grid-cols-2,
+  .grid-cols-3,
+  .lg\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Full width buttons */
+  button,
+  .button,
+  a[style*="display: inline-flex"] {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+.font-pixel {
+  font-family: var(--font-pixel);
 }

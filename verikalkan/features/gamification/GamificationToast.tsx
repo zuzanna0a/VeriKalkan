@@ -36,7 +36,11 @@ export default function GamificationToast({ badge, onClose }: ToastProps) {
         <p style={{ color: "#00ff88", fontSize: "10px", margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "2px", fontWeight: "bold", fontFamily: "monospace" }}>YENİ ROZET!</p>
         <p style={{ color: "white", fontWeight: "bold", fontSize: "15px", margin: 0, fontFamily: "monospace" }}>{badge.label}</p>
       </div>
-      <button onClick={onClose} style={{ background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: "18px", marginLeft: "8px" }}>×</button>
+      <button onClick={onClose} style={{ background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: "0", marginLeft: "8px" }}>
+        <PixelIcon variant="close" size={12} color="#475569" />
+      </button>
     </div>
   );
 }
+
+import PixelIcon from "@/features/ui/PixelIcon";

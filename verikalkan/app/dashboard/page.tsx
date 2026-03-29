@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ShieldCheck, Plus, FileSearch, ArrowRight, RefreshCw, AlertTriangle, CheckCircle } from "lucide-react";
+import PixelIcon from "@/features/ui/PixelIcon";
 import HourglassTracker from "@/features/tracking/HourglassTracker";
 import { getGamification, BADGES } from "@/features/gamification/useGamification";
 import PixelBadge from "@/features/gamification/PixelBadge";
 import DarkLayout from "@/components/DarkLayout";
 import { useTheme } from "@/context/ThemeContext";
+import { KVKK_EMAILS } from "@/features/petition/kvkkEmails";
 
 interface TrackingRecord {
   id: string;
@@ -26,6 +28,7 @@ export default function DashboardPage() {
   const [breachData, setBreachData] = useState<any>(null);
   const [breachLoading, setBreachLoading] = useState(false);
   const { theme } = useTheme();
+  
 
   const gamification = getGamification();
   const nextBadge = BADGES.find(b => !gamification.badges.includes(b.id));
@@ -35,21 +38,31 @@ export default function DashboardPage() {
     const dict: Record<string, string> = {
       "passwords": "Şifre",
       "emails": "E-posta",
-      "names": "İsim",
+      "phone": "Telefon",
       "phones": "Telefon",
+      "address": "Adres",
       "addresses": "Adres",
+      "names": "İsim",
+      "payment": "Ödeme bilgisi",
+      "identity": "Kimlik bilgisi",
       "usernames": "Kullanıcı adı"
     };
     return dict[field] || field;
   };
 
-  const fetchBreaches = async (email: string) => {
+  const fetchBreaches = async (userData: any) => {
+    if (!userData?.email) return;
     setBreachLoading(true);
     try {
+      const allPlatforms = [...(userData.selectedPlatforms || []), ...(userData.customPlatforms || [])];
       const res = await fetch("/api/check-breach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ 
+          email: userData.email,
+          platforms: allPlatforms,
+          internet_years: userData.yearsOnline
+        })
       });
       const data = await res.json();
       setBreachData(data);
@@ -75,7 +88,7 @@ export default function DashboardPage() {
         .then(data => { setTrackings(data.trackings || []); setLoading(false); })
         .catch(() => setLoading(false));
 
-      fetchBreaches(userData.email);
+      fetchBreaches(userData);
     } catch { router.replace("/basla"); }
   }, [router]);
 
@@ -95,7 +108,7 @@ export default function DashboardPage() {
         
         {/* SECTION 1: Greeting */}
         <section>
-          <h1 style={{ fontSize: "32px", fontWeight: "bold", color: "var(--vk-text)", marginBottom: "8px" }}>Merhaba, {user.firstName} 👋</h1>
+          <h1 style={{ fontSize: "32px", fontWeight: "bold", color: "var(--vk-text)", marginBottom: "8px" }}>Merhaba, {user.firstName} <PixelIcon variant="wave" size={28} color="#ffd700" /></h1>
           <p style={{ color: "var(--vk-text-muted)", fontSize: "14px" }}>Dijital veri güvenliğin sistemimiz tarafından takip ediliyor.</p>
         </section>
 
@@ -144,7 +157,7 @@ export default function DashboardPage() {
                       }} />
                     </div>
                   </div>
-                  <button onClick={() => fetchBreaches(user.email)} disabled={breachLoading} style={secondaryButtonStyle}>
+                  <button onClick={() => fetchBreaches(user)} disabled={breachLoading} style={secondaryButtonStyle}>
                     {breachLoading ? <RefreshCw className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />} SKORU GÜNCELLE
                   </button>
                 </div>
@@ -232,22 +245,59 @@ export default function DashboardPage() {
               <label style={labelStyle}>// RİSKLİ PLATFORMLAR</label>
               <div className="space-y-3">
                 {breachLoading ? (
-                  <div className="text-center py-8 font-mono text-[10px] text-vk-text-muted animate-pulse">SIZIINTI VERİTABANI TARANIYOR...</div>
+                  <>
+                    {[1, 2, 3].map(i => (
+                      <div key={i} style={{...cardStyle, borderStyle: "dashed", opacity: 0.5}} className="animate-pulse">
+                        <div style={{ height: "16px", width: "120px", background: "var(--vk-bg-input)", marginBottom: "12px", borderRadius: "4px" }} />
+                        <div style={{ height: "10px", width: "80px", background: "var(--vk-bg-input)", marginBottom: "12px", borderRadius: "4px" }} />
+                        <div className="flex gap-2">
+                          <div style={{ height: "12px", width: "40px", background: "var(--vk-bg-input)", borderRadius: "4px" }} />
+                          <div style={{ height: "12px", width: "40px", background: "var(--vk-bg-input)", borderRadius: "4px" }} />
+                        </div>
+                      </div>
+                    ))}
+                    <div className="text-center py-4 font-mono text-[10px] text-vk-primary animate-pulse">SIZIINTI VERİTABANI TARANIYOR...</div>
+                  </>
                 ) : allBreaches.length > 0 ? (
                   allBreaches.map((source: any, idx: number) => {
                     const isMatched = onboardingPlatforms.some(p => source.name.toLowerCase().includes(p.toLowerCase()));
+                    const riskColor = source.risk === "yüksek" ? "#ff4444" : source.risk === "orta" ? "#ffd700" : "#00ff9d";
+                    
+                    const handleRiskAction = () => {
+                      const kvkkEmail = KVKK_EMAILS[source.name];
+                      if (kvkkEmail) {
+                        router.push(`/dilekce?company=${encodeURIComponent(source.name)}&email=${encodeURIComponent(kvkkEmail)}`);
+                      } else {
+                        alert("Bu şirketin KVKK adresi sistemimizde kayıtlı değil. Lütfen şirketin web sitesinden gizlilik politikası sayfasını kontrol edin.");
+                      }
+                    };
+
                     return (
-                      <div key={idx} style={{...cardStyle, border: isMatched ? "1px solid #ef4444" : "1px solid var(--vk-border)"}} className="space-y-3">
+                      <div key={idx} style={{...cardStyle, border: `1px solid ${riskColor}44`, position: "relative"}} className="space-y-3">
                         <div className="flex justify-between items-start">
                           <div>
-                            <div style={{ color: isMatched ? "#ef4444" : "var(--vk-text)", fontWeight: "bold", fontSize: "14px" }}>
-                              {source.name}
+                            <div className="flex items-center gap-2">
+                              <div style={{ color: "var(--vk-text)", fontWeight: "bold", fontSize: "14px" }}>
+                                {source.name}
+                              </div>
+                              <span style={{ 
+                                fontSize: "8px", 
+                                padding: "2px 6px", 
+                                borderRadius: "2px", 
+                                background: `${riskColor}22`, 
+                                color: riskColor,
+                                border: `1px solid ${riskColor}44`,
+                                textTransform: "uppercase",
+                                fontWeight: "bold"
+                              }}>
+                                {source.risk || "Bilinmiyor"}
+                              </span>
                             </div>
                             <div style={{ color: "var(--vk-text-muted)", fontSize: "10px", fontFamily: "monospace" }}>
                               {source.date || "Tarih Bilinmiyor"}
                             </div>
                           </div>
-                          {isMatched && <AlertTriangle className="h-4 w-4 text-[#ef4444]" />}
+                          {isMatched && <PixelIcon variant="alert" size={16} color="#ff4444" />}
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {source.fields?.map((f: string) => (
@@ -256,16 +306,37 @@ export default function DashboardPage() {
                             </span>
                           ))}
                         </div>
-                        <Link href={`/dilekce?company=${encodeURIComponent(source.name)}`} style={{ display: "block", textAlign: "right", color: "var(--vk-primary)", fontSize: "11px", textDecoration: "none", fontWeight: "bold" }}>
+                        
+                        {!source.certain && (
+                          <div style={{ fontSize: "9px", color: "var(--vk-text-muted)", opacity: 0.6, fontStyle: "italic" }}>
+                            * AI tahmini, kesin değildir
+                          </div>
+                        )}
+ 
+                        <button 
+                          onClick={handleRiskAction} 
+                          style={{ 
+                            background: "none", 
+                            border: "none", 
+                            display: "block", 
+                            width: "100%",
+                            textAlign: "right", 
+                            color: "var(--vk-primary)", 
+                            fontSize: "11px", 
+                            fontWeight: "bold",
+                            cursor: "pointer",
+                            padding: "4px 0"
+                          }}
+                        >
                           HAKKINI KULLAN →
-                        </Link>
+                        </button>
                       </div>
                     );
                   })
                 ) : breachData && allBreaches.length === 0 ? (
                   <div style={{...cardStyle, textAlign: "center", padding: "32px", border: "1px dashed var(--vk-primary)"}}>
-                    <CheckCircle className="h-8 w-8 text-vk-primary opacity-50 mx-auto mb-4" />
-                    <p style={{ color: "var(--vk-primary)", fontSize: "12px", fontWeight: "bold" }}>Sızıntı tespit edilmedi! Dijital varlığınız güvende görünüyor.</p>
+                    <PixelIcon variant="check" size={32} color="var(--vk-primary)" className="opacity-50 mx-auto mb-4" />
+                    <p style={{ color: "var(--vk-primary)", fontSize: "12px", fontWeight: "bold" }}>Kayıtlı platformlarınızda bilinen sızıntı tespit edilmedi.</p>
                   </div>
                 ) : (
                   <div style={{...cardStyle, textAlign: "center", padding: "32px"}}>
@@ -275,10 +346,8 @@ export default function DashboardPage() {
               </div>
             </section>
           </div>
-
         </div>
       </div>
     </DarkLayout>
   );
 }
-

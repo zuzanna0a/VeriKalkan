@@ -15,6 +15,7 @@ export interface PetitionFormData {
   email: string;
   tcLast4: string;
   rightType: RightType | "";
+  language: "tr" | "en";
 }
 
 interface PetitionContextType {

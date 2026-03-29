@@ -14,14 +14,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    const saved = localStorage.getItem("vk-theme") as Theme;
-    if (saved) setTheme(saved);
+    const saved = localStorage.getItem("theme") as Theme;
+    if (saved) {
+      setTheme(saved);
+    } else {
+      setTheme("dark");
+      localStorage.setItem("theme", "dark");
+    }
   }, []);
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
-    localStorage.setItem("vk-theme", next);
+    localStorage.setItem("theme", next);
   };
 
   if (!mounted) return <>{children}</>;

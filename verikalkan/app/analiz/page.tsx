@@ -8,6 +8,7 @@ import { addPoints } from "@/features/gamification/useGamification";
 import GamificationToast from "@/features/gamification/GamificationToast";
 import DarkLayout from "@/components/DarkLayout";
 import { useTheme } from "@/context/ThemeContext";
+import PixelIcon from "@/features/ui/PixelIcon";
 
 const COMPANY_PRIVACY_URLS = [
   { name: "Trendyol", privacyUrl: "https://www.trendyol.com/gizlilik-politikasi" },
@@ -96,7 +97,7 @@ export default function AnalysisPage() {
           </div>
 
           <button onClick={handleAnalyze} disabled={loading} style={{...primaryButtonStyle, width: "100%"}}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "ANALİZİ BAŞLAT →"}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>ANALİZİ BAŞLAT <PixelIcon variant="arrow" size={14} color="currentColor" /></>}
           </button>
         </div>
 
@@ -125,7 +126,7 @@ export default function AnalysisPage() {
               {result.summary}
             </div>
 
-            <Link href="/dilekce" style={{...primaryButtonStyle, width: "100%"}}>BU ŞİRKETE DİLEKÇE GÖNDER →</Link>
+            <Link href="/dilekce" style={{...primaryButtonStyle, width: "100%"}}>BU ŞİRKETE DİLEKÇE GÖNDER <PixelIcon variant="arrow" size={14} color="currentColor" /></Link>
           </div>
         )}
       </div>
