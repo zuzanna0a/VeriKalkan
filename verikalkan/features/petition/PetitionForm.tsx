@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { COMPANIES, Company } from "./companies";
 import { usePetitionContext } from "./PetitionContext";
 
@@ -136,6 +136,48 @@ export default function PetitionForm() {
     tcLast4: "",
     rightType: "",
   });
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    // 1. Try to pre-fill from vk-user
+    const rawUser = localStorage.getItem("vk-user");
+    if (rawUser) {
+      try {
+        const userData = JSON.parse(rawUser);
+        setForm(prev => ({
+          ...prev,
+          firstName: userData.firstName || prev.firstName,
+          lastName: userData.lastName || prev.lastName,
+          email: userData.email || prev.email,
+        }));
+      } catch (e) {
+        console.error("vk-user parse error", e);
+      }
+    }
+
+    // 2. Try to pre-select company from URL param
+    const companyParam = searchParams.get("company");
+    if (companyParam) {
+      const found = COMPANIES.find((c: Company) => c.name.toLowerCase() === companyParam.toLowerCase());
+      if (found) {
+        setForm(prev => ({
+          ...prev,
+          companyName: found.name,
+          dpoEmail: found.dpoEmail,
+          isOther: false
+        }));
+      } else {
+        // If not found in list, treat as "Other"
+        setForm(prev => ({
+          ...prev,
+          companyName: companyParam,
+          isOther: true,
+          manualDpoEmail: "" // User will fill this
+        }));
+      }
+    }
+  }, [searchParams]);
 
   // ── Field helpers ──────────────────────────────────────────────────────────
 

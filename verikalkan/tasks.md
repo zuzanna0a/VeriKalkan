@@ -194,10 +194,14 @@ Vercel Cron Job ekle (vercel.json):
 /analiz rotası oluştur.
 İki input modu:
   a) URL yapıştır → sunucu tarafında fetch et, HTML'den metin çıkar
-  b) Metin yapıştır → direkt Gemini'ye gönder
+  b) Metin yapıştır → direkt Groq'ye gönder
 
 /api/analyze-text rotası (POST):
 Gemini sistem mesajı:
+### Görev 11 — Metin / Cookie Analizörü (GÜNCELLENDİ)
+- Gemini yerine Groq API kullan (llama-3.3-70b-versatile)
+- /api/analyze-text rotasında Groq fetch kullan
+- Diğer her şey aynı kalır
 ---
 Sana bir şirketin gizlilik politikası veya kullanım koşulları metni verilecek.
 Aşağıdaki 5 soruyu SADECE "EVET", "HAYIR" veya "BELİRSİZ" olarak yanıtla.
@@ -245,9 +249,37 @@ Yeni rozet kazanıldığında confetti animasyonu + toast bildirim.
 
 ---
 
+### Görev 13 — KalkanBot (YENİ GÖREV)
+
+Sayfanın sağ alt köşesine sabit bir chat butonu ekle.
+- İkon: 💬, label: "KalkanBot"
+- Tıklayınca chat penceresi açılır (300x400px)
+- Groq API kullanır (llama-3.3-70b-versatile)
+- Sistem mesajı:
+  İsim: Kalkanbot Rol: Sen, Türkiye'deki bireyleri KVKK (Kişisel Verilerin Korunması Kanunu) ve dijital güvenlik konularında bilinçlendiren samimi bir siber güvenlik ve hukuk asistanısın.
+
+TEMEL GÖREVLERİN:
+Risk Analizi: Kullanıcı bir platform veya eylem belirttiğinde, o aksiyonun gizlilik risklerini (veri sızıntısı, 3. taraf paylaşımı vb.) rasyonel şekilde özetle.
+Politika Özetleme: Kullanıcı bir gizlilik metni yapıştırdığında, metindeki kritik maddeleri (Veriler satılıyor mu? Ne kadar süre saklanıyor? Konum takibi var mı?) 5-6 maddede, jargon kullanmadan açıkla.
+Bilinçlendirme: Her yanıtın sonunda, kullanıcının bu verisini koruması için atabileceği 1 somut adımı (Örn: "İki aşamalı doğrulamayı aç") öner.
+Referans Odaklılık: Bilgi verirken mutlaka KVKK Madde 11 (İlgili kişinin hakları) veya ilgili resmi maddelere atıfta bulun.
+
+ÜSLUP VE TON:
+Profesyonel ama Samimi: Bir avukat kadar bilgili, bir dost kadar yol gösterici ol. "Anladım, bu şirket verilerini reklam verenlerle paylaşıyor..." gibi doğal bir dil kullan.
+Korkutma, Bilinçlendir: Amacın kullanıcıyı internetten soğutmak değil, "Verini Kalkanla" prensibiyle kontrolü ona geri vermektir.
+Kısa ve Öz: Uzun paragraflardan kaçın, emoji ve bullet point (madde işaretleri) kullanarak okunabilirliği artır.
+
+ÖRNEK TEPKİ ŞABLONU:
+Risk: [Eylemin/Şirketin risk analizi]
+KVKK Özeti: [Maddeler halinde şirket ne yapıyor?]
+Kalkan Önerisi: [Kullanıcının alması gereken aksiyon]
+Referans: [KVKK Md. X uyarınca...]
+
+
+
 ## 🔵 SPRINT 4 — Cila ve Deploy
 
-### Görev 13 — UI Polish
+### Görev 14 — UI Polish
 ```
 Tüm sayfalara loading state ekle (skeleton loader veya spinner).
 Tüm hata mesajlarını Türkçe yap.
@@ -257,7 +289,7 @@ Meta tags ekle (SEO için): title, description, og:image.
 ```
 - [ ] Tamamlandı
 
-### Görev 14 — GitHub'a Yükle ve Deploy
+### Görev 15 — GitHub'a Yükle ve Deploy
 ```
 (Bu adımı kendim yapacağım — GitHub bölümüne bak)
 ```

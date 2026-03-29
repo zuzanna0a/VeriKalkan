@@ -23,14 +23,14 @@ export default function DilecePage() {
             </Link>
 
             <nav className="flex items-center gap-4">
-              <Link href="/skor" className="text-sm text-white/80 hover:text-white">
-                Skor
+              <Link href="/dashboard" className="text-sm text-white/80 hover:text-white">
+                Dashboard
               </Link>
               <Link
-                href="/dashboard"
+                href="/dilekce"
                 className="text-sm text-white/80 hover:text-white"
               >
-                Dashboard
+                Dilekçe
               </Link>
             </nav>
           </div>

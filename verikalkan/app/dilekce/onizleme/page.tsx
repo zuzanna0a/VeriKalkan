@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePetitionContext } from "@/features/petition/PetitionContext";
 import { Button } from "@/components/ui/button";
 import { Loader2, Copy, Download, Mail, CheckCircle2 } from "lucide-react";
 import jsPDF from "jspdf";
 import SignaturePadComponent, { SignaturePadRef } from "@/features/petition/SignaturePad";
+import { addPoints, getGamification } from "@/features/gamification/useGamification";
+import GamificationToast from "@/features/gamification/GamificationToast";
 
 export default function PetitionPreviewPage() {
   const router = useRouter();
@@ -20,6 +23,8 @@ export default function PetitionPreviewPage() {
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [trackingStarted, setTrackingStarted] = useState(false);
+  const [toastBadge, setToastBadge] = useState<any>(null);
 
   const [hasFetched, setHasFetched] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -130,6 +135,13 @@ export default function PetitionPreviewPage() {
 
         setPetitionText(fullText);
         setGeneratedPetition(fullText); // Context'e kaydet (Caching)
+
+        // Gamification +15/+10 puan
+        const state = getGamification();
+        const petitionCount = state.actions?.filter((a:any) => a.action === "dilekce").length || 0;
+        const points = petitionCount === 0 ? 15 : 10;
+        const { newBadges } = addPoints(points, "dilekce");
+        if (newBadges.length > 0) setToastBadge(newBadges[0]);
       } catch (err: any) {
         console.error("Frontend Fetch Hatası Yakalandı:", err);
         setError(err.message || "Bilinmeyen bir fetch hatası oluştu.");
@@ -291,6 +303,30 @@ export default function PetitionPreviewPage() {
     }
   };
 
+  const handleStartTracking = async () => {
+    if (!formData) return;
+    const capitalize = (s: string) => s ? s.trim().charAt(0).toUpperCase() + s.trim().slice(1).toLowerCase() : "";
+    const response = await fetch("/api/start-tracking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userEmail: formData.email,
+        userName: `${capitalize(formData.firstName)} ${capitalize(formData.lastName)}`.trim(),
+        companyName: formData.companyName,
+        dpoEmail: formData.dpoEmail,
+        rightType: formData.rightType
+      })
+    });
+    if (response.ok) {
+      setTrackingStarted(true);
+      // Gamification +12 puan
+      const { newBadges } = addPoints(12, "takip");
+      if (newBadges.length > 0) setToastBadge(newBadges[0]);
+    } else {
+      alert("Takip başlatılamadı, lütfen tekrar deneyin.");
+    }
+  };
+
   if (!formData) return null; // Will redirect in useEffect
 
   return (
@@ -415,13 +451,40 @@ export default function PetitionPreviewPage() {
                   <p className="text-xs text-red-500 mt-2">{emailError} (Dilekçeyi kopyalayıp kendiniz de gönderebilirsiniz.)</p>
                 )}
                 {emailSuccess && (
-                  <p className="text-xs text-green-600 mt-2">Dilekçeniz e-posta olarak hazırlandı ve test modunda size iletildi. Domain kurulumu sonrası doğrudan şirkete gönderilecektir.</p>
+                  <div className="mt-4">
+                    <p className="text-xs text-green-600 mb-4">Dilekçeniz e-posta olarak hazırlandı ve test modunda size iletildi. Domain kurulumu sonrası doğrudan şirkete gönderilecektir.</p>
+                    <div className="border rounded-xl p-4 bg-blue-50 space-y-3">
+                      <p className="font-medium text-sm text-blue-900">30 Gün Takibini Başlat</p>
+                      <p className="text-xs text-blue-700">
+                        Şirketin 30 gün içinde cevap vermesi gerekiyor. 
+                        Takibi başlatırsak seni gün 10, 25 ve 30'da hatırlatırız.
+                      </p>
+                      {!trackingStarted ? (
+                        <button onClick={handleStartTracking} className="w-full bg-blue-600 text-white rounded-lg py-2 text-sm hover:bg-blue-700">
+                          Takibi Başlat
+                        </button>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <p className="text-green-700 text-sm font-medium">✓ Takip başlatıldı! E-posta ile bildirim alacaksınız.</p>
+                          <Button asChild className="w-full bg-[#1E3A5F] text-white">
+                            <Link href="/dashboard">Dashboard'a Dön →</Link>
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-6 pt-6 border-t border-slate-100">
+                      <Button asChild variant="ghost" className="w-full text-slate-500">
+                        <Link href="/dashboard">Dashboard'a Dön</Link>
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
           </div>
         </div>
       )}
+      {toastBadge && <GamificationToast badge={toastBadge} onClose={() => setToastBadge(null)} />}
     </div>
   );
 }
