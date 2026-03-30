@@ -4,7 +4,7 @@
 
 ---
 
-## 📉 Problem
+## Problemim
 
 Türkiye'de milyonlarca insan, hangi şirketlerin elinde hangi kişisel verisinin olduğunu bilmiyor. Trendyol'dan Migros'a, Papara'dan LinkedIn'e — onlarca platform, yıllarca veri biriktiriyor.
 
@@ -13,7 +13,7 @@ Rakipler kurumsal çalışıyor kullanıcılar bireysel olarak nerde verilerinin
 
 ---
 
-## 💡 Çözüm
+## Çözümüm
 
 VeriKalkan beş şey yapar:
 
@@ -25,7 +25,7 @@ VeriKalkan beş şey yapar:
 
 ---
 
-## 🚀 Nasıl Çalıştırılır?
+## Nasıl Çalıştırabilirsin?
 
 ### Gereksinimler
 - Node.js 18+
@@ -62,13 +62,13 @@ SUPABASE_SERVICE_ROLE_KEY=buraya_service_role_key
 
 ---
 
-## 🌐 Canlı Demo
+## Canlı Demo
 
 https://verikalkan.vercel.app
 
 ---
 
-## 📁 Proje Yapısı
+## Proje Yapısı
 
 ```text
 verikalkan/
@@ -93,7 +93,7 @@ verikalkan/
 
 ---
 
-## 🧠 Teknik Stack
+## Teknik Stack
 
 | Katman | Teknoloji |
 |--------|-----------|
@@ -106,7 +106,7 @@ verikalkan/
 
 ---
 
-## ⚠️ Önemli Notlar
+## Önemli Notlar
 
 - Bu uygulama hukuki danışmanlık vermez; dilekçe şablonları bilgi amaçlıdır.
 - Kullanıcı verileri Supabase'de güvenli şekilde saklanır, üçüncü taraflarla paylaşılmaz.
@@ -114,7 +114,7 @@ verikalkan/
 
 ---
 
-## 👤 Geliştirici
+##  Geliştirici
 
 Sözbin — [@zuzanna0a](https://github.com/zuzanna0a)
 
