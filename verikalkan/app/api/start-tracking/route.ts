@@ -1,10 +1,10 @@
-import { supabase } from "@/features/supabase/client";
+import { supabaseAdmin } from "@/features/supabase/client";
 
 export async function POST(req: Request) {
   const body = await req.json();
   const { userEmail, userName, companyName, dpoEmail, rightType } = body;
 
-  if (!supabase) {
+  if (!supabaseAdmin) {
     return Response.json({ error: "Veritabanı bağlantısı yok" }, { status: 500 });
   }
 
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   deadline.setDate(deadline.getDate() + 30);
 
   // Find the latest petition for this user+company
-  const { data: petition } = await supabase
+  const { data: petition } = await supabaseAdmin
     .from("petitions")
     .select("id")
     .eq("user_email", userEmail)
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     .limit(1)
     .single();
 
-  const { data: tracking, error } = await supabase
+  const { data: tracking, error } = await supabaseAdmin
     .from("tracking")
     .insert([{
       petition_id: petition?.id || null,

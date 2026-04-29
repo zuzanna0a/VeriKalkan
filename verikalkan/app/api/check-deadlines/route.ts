@@ -1,11 +1,11 @@
-import { supabase } from "@/features/supabase/client";
+import { supabaseAdmin } from "@/features/supabase/client";
 
 export async function GET() {
-  if (!supabase) return Response.json({ error: "DB yok" }, { status: 500 });
+  if (!supabaseAdmin) return Response.json({ error: "DB yok" }, { status: 500 });
 
   const now = new Date();
   
-  const { data: trackings } = await supabase
+  const { data: trackings } = await supabaseAdmin
     .from("tracking")
     .select("*")
     .eq("result", "pending");
@@ -25,7 +25,7 @@ export async function GET() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userEmail: t.user_email, userName: t.user_name, companyName: t.company_name, dayNumber: 10 })
       });
-      await supabase.from("tracking").update({ notif_10_sent: true }).eq("id", t.id);
+      await supabaseAdmin.from("tracking").update({ notif_10_sent: true }).eq("id", t.id);
       sent++;
     }
 
@@ -35,7 +35,7 @@ export async function GET() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userEmail: t.user_email, userName: t.user_name, companyName: t.company_name, dayNumber: 25 })
       });
-      await supabase.from("tracking").update({ notif_25_sent: true }).eq("id", t.id);
+      await supabaseAdmin.from("tracking").update({ notif_25_sent: true }).eq("id", t.id);
       sent++;
     }
 
@@ -45,7 +45,7 @@ export async function GET() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userEmail: t.user_email, userName: t.user_name, companyName: t.company_name, dayNumber: 30 })
       });
-      await supabase.from("tracking").update({ result: "notified" }).eq("id", t.id);
+      await supabaseAdmin.from("tracking").update({ result: "notified" }).eq("id", t.id);
       sent++;
     }
   }

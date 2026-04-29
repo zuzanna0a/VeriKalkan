@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/features/supabase/client";
+import { supabaseAdmin } from "@/features/supabase/client";
 
 // Bekleme fonksiyonu
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -67,9 +67,9 @@ export async function POST(req: Request) {
     }
 
     // 4. Üretilen yepyeni sonucu Supabase'e kaydet (Caching için)
-    if (supabase) {
+    if (supabaseAdmin) {
       try {
-        const { error: insertError } = await supabase.from("petitions").insert([{
+        const { error: insertError } = await supabaseAdmin.from("petitions").insert([{
           user_email: userEmail || "anonim",
           user_name: userName,
           company_name: companyName,

@@ -95,7 +95,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 HIBP_API_KEY=buraya_hibp_anahtarin
 ```
 
-⚠️ `.env.local` dosyasını asla 
+ `.env.local` dosyasını asla 
 GitHub'a yükleme. `.gitignore` 
 dosyasında tanımlı olmalı.
 
