@@ -49,7 +49,7 @@ Referans: [KVKK Md. X uyarınca...]
         "Authorization": "Bearer " + apiKey
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-120b",
         messages: groqMessages,
         temperature: 0.4,
         max_tokens: 200
