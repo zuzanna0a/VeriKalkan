@@ -66,7 +66,6 @@ SUPABASE_SERVICE_ROLE_KEY=buraya_service_role_key
 
 https://veri-kalkan.vercel.app/
 
-video linki: https://youtu.be/OyEbdYQYwKg?si=s0sC7BEn6XHBoZ5r
 
 
 ---
