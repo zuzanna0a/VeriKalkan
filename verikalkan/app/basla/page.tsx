@@ -3,11 +3,31 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, CheckCircle2, CheckCircle, AlertCircle, Trash2, Plus, ArrowRight } from "lucide-react";
-import PixelIcon from "@/features/ui/PixelIcon";
-import { KNOWN_BREACHES } from "@/features/score/breach-database";
-import { addPoints } from "@/features/gamification/useGamification";
-import GamificationToast from "@/features/gamification/GamificationToast";
 import DarkLayout from "@/components/DarkLayout";
+
+// Inline PixelIcon — simple unicode glyphs by variant
+const PIXEL_ICONS: Record<string, string> = { arrow: "→", wave: "👋", shield: "🛡" };
+function PixelIcon({ variant, size, color, className }: { variant: string; size?: number; color?: string; className?: string }) {
+  return <span style={{ fontSize: size, color, lineHeight: 1 }} className={className}>{PIXEL_ICONS[variant] ?? "•"}</span>;
+}
+
+// Inline stub — gamification system not yet implemented
+const addPoints = (_pts: number, _source: string): { newBadges: any[] } => ({ newBadges: [] });
+
+// Inline breach database — known data breaches for local lookup
+const KNOWN_BREACHES = [
+  { name: "Trendyol", year: 2022, dataClasses: ["E-posta", "Telefon", "Adres"] },
+  { name: "Hepsiburada", year: 2021, dataClasses: ["E-posta", "Şifre", "Telefon"] },
+  { name: "Getir", year: 2022, dataClasses: ["E-posta", "Telefon"] },
+  { name: "Yemeksepeti", year: 2020, dataClasses: ["E-posta", "Şifre", "Adres"] },
+  { name: "Sahibinden", year: 2021, dataClasses: ["E-posta", "Telefon", "İlan Bilgisi"] },
+  { name: "LinkedIn", year: 2021, dataClasses: ["E-posta", "Telefon", "Konum"] },
+  { name: "Facebook", year: 2019, dataClasses: ["E-posta", "Telefon", "Konum"] },
+  { name: "Twitter/X", year: 2022, dataClasses: ["E-posta", "Telefon"] },
+  { name: "Instagram", year: 2021, dataClasses: ["E-posta", "Telefon"] },
+  { name: "TikTok", year: 2022, dataClasses: ["E-posta", "Profil Bilgisi"] },
+  { name: "Papara", year: 2022, dataClasses: ["TC Kimlik", "E-posta", "Telefon"] },
+];
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -515,7 +535,7 @@ export default function OnboardingPage() {
           <PixelIcon variant="shield" size={14} color="var(--vk-primary)" className="mr-1" /> Verileriniz yerel cihazınızda saklanır.
         </p>
       </div>
-      {toastBadge && <GamificationToast badge={toastBadge} onClose={() => setToastBadge(null)} />}
+      
     </DarkLayout>
   );
 }

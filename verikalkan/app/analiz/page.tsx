@@ -4,11 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
-import { addPoints } from "@/features/gamification/useGamification";
-import GamificationToast from "@/features/gamification/GamificationToast";
 import DarkLayout from "@/components/DarkLayout";
 import { useTheme } from "@/context/ThemeContext";
-import PixelIcon from "@/features/ui/PixelIcon";
+
+// Inline stub — gamification system not yet implemented
+const addPoints = (_pts: number, _source: string): { newBadges: any[] } => ({ newBadges: [] });
+
+// Inline PixelIcon — renders simple unicode/emoji glyphs by variant
+const PIXEL_ICONS: Record<string, string> = { arrow: "→", wave: "👋", shield: "🛡" };
+function PixelIcon({ variant, size, color, className }: { variant: string; size?: number; color?: string; className?: string }) {
+  return <span style={{ fontSize: size, color, lineHeight: 1 }} className={className}>{PIXEL_ICONS[variant] ?? "•"}</span>;
+}
 
 const COMPANY_PRIVACY_URLS = [
   { name: "Trendyol", privacyUrl: "https://www.trendyol.com/gizlilik-politikasi" },
@@ -130,7 +136,7 @@ export default function AnalysisPage() {
           </div>
         )}
       </div>
-      {toastBadge && <GamificationToast badge={toastBadge} onClose={() => setToastBadge(null)} />}
+      
     </DarkLayout>
   );
 }
